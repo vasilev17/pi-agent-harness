@@ -721,6 +721,10 @@ export class CursorRuntime {
 	private async resumeDisplay(binding: Binding, context: Context, writer: PiEventWriter): Promise<void> {
 		binding.displayPendingIds = [];
 		binding.writer = writer;
+		// The prompt may finish in runQueued, which records the turn from these. Without them the
+		// next prompt would resend this turn's own handoff messages to Cursor as unseen context.
+		binding.pendingContextCount = context.messages.length;
+		binding.pendingContextFingerprint = messagesFingerprint(context.messages);
 		if (binding.promptFailed !== undefined) {
 			writer.fail(binding.promptFailed, isAbort(binding.promptFailed));
 			return;
