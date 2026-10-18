@@ -62,25 +62,13 @@ The script:
 2. Installs Pi 1.3.0 globally. The patches touch Pi internals, so upgrade Pi deliberately and re-run the smoke test.
 3. Runs `npm ci` for the provider's runtime dependencies. Pi's own packages are peers that Pi supplies at load time. A copy in `node_modules` would create duplicate classes, so they are left out.
 4. Builds `editor/pi-editor-open` into a `.vsix` and installs it into `cursor` and `code` if they are on `PATH`.
-5. Installs the skills listed below into `~/.agents/skills`. Pi loads that directory itself.
-6. Runs the smoke test. `"ok": true` with an empty `stderr` means every extension loaded.
+5. Runs the smoke test. `"ok": true` with an empty `stderr` means every extension loaded.
 
-Flags: `-SkipPi`, `-SkipEditor`, `-SkipEditorInstall`, `-SkipSkills`.
+Flags: `-SkipPi`, `-SkipEditor`, `-SkipEditorInstall`.
 
 `cursor-agent login` is a credential on that machine. It is not in the repo. The script cannot do it.
 
 After install, quit any Pi process that was already running and start `pi` again. A running process keeps the code it loaded at startup.
-
-## Skills
-
-Pi loads skills from `~/.pi/agent/skills` and from `~/.agents/skills`. This repo has no `skills/` directory. The skills on the original machine are upstream packages shared with other agents, so they are installed by the script instead of copied here:
-
-| Source | Skills |
-| --- | --- |
-| `JuliusBrussee/caveman` | `cavecrew`, `caveman`, `caveman-commit`, `caveman-compress`, `caveman-help`, `caveman-review`, `caveman-stats` |
-| `vercel-labs/skills` | `find-skills` |
-| `latent-spaces/brag` | `brag` |
-| `heygen-com/hyperframes` | `hyperframes`, `hyperframes-animation`, `hyperframes-audio`, `hyperframes-cli`, `hyperframes-core`, `hyperframes-creative`, `hyperframes-keyframes`, `hyperframes-registry`, `hyperframes-studio`, `media-use` |
 
 ## Not in this repo
 

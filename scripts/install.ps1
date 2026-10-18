@@ -10,14 +10,12 @@
   3. Installs runtime dependencies of the vendored Cursor ACP provider.
   4. Builds the pi-editor-open VS Code/Cursor extension and installs it into
      every editor CLI found on PATH (cursor, code).
-  5. Installs the shared skills Pi loads from ~/.agents/skills.
-  6. Runs the smoke test.
+  5. Runs the smoke test.
 #>
 param(
 	[switch]$SkipPi,
 	[switch]$SkipEditor,
-	[switch]$SkipEditorInstall,
-	[switch]$SkipSkills
+	[switch]$SkipEditorInstall
 )
 
 $ErrorActionPreference = "Stop"
@@ -115,24 +113,6 @@ if (-not $SkipEditor) {
 				Invoke-Step "Install pi-editor-open into $cli" { & $cli --install-extension $vsix --force }
 			}
 		}
-	}
-}
-
-# Pi auto-loads ~/.agents/skills. These are upstream skills, not copies in this repo.
-# Names match the set installed on the machine this setup was bundled from.
-if (-not $SkipSkills) {
-	$skillInstalls = @(
-		@{ Source = "JuliusBrussee/caveman"; Skills = @("cavecrew", "caveman", "caveman-commit", "caveman-compress", "caveman-help", "caveman-review", "caveman-stats") },
-		@{ Source = "vercel-labs/skills"; Skills = @("find-skills") },
-		@{ Source = "latent-spaces/brag"; Skills = @("brag") },
-		@{ Source = "heygen-com/hyperframes"; Skills = @("hyperframes", "hyperframes-animation", "hyperframes-audio", "hyperframes-cli", "hyperframes-core", "hyperframes-creative", "hyperframes-keyframes", "hyperframes-registry", "hyperframes-studio", "media-use") }
-	)
-	foreach ($entry in $skillInstalls) {
-		$source = $entry.Source
-		$skillArgs = @("--yes", "skills", "add", $source, "-g", "-y")
-		foreach ($name in $entry.Skills) { $skillArgs += @("--skill", $name) }
-		$step = { & npx @skillArgs }.GetNewClosure()
-		Invoke-Step "Skills from $source" $step
 	}
 }
 
