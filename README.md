@@ -44,31 +44,52 @@ Both are MIT licensed; their `LICENSE` files are kept. They live in the repo ins
 
 ## Install on a new machine
 
-Requirements: Node 22.19 or newer, git, a [Nerd Font](https://www.nerdfonts.com/) set in the terminal, and the [Cursor Agent CLI](https://cursor.com/docs/cli/installation) logged in (`cursor-agent login`). The footer's usage meter reads the Cursor login from `%APPDATA%\Cursor` or `~/.cursor`.
+Requirements: Node 22.19 or newer, git, a [Nerd Font](https://www.nerdfonts.com/) set in the terminal, and the [Cursor Agent CLI](https://cursor.com/docs/cli/installation). The footer's usage meter reads the Cursor login from `%APPDATA%\Cursor` or `~/.cursor`.
+
+Pi reads `~/.pi/agent` and ignores every other folder unless `PI_CODING_AGENT_DIR` points at it. Clone this repo anywhere. `scripts/install.ps1` junctions `~/.pi/agent` to the clone, so Pi's default path still works and the project can live next to other repos. Do not set `PI_CODING_AGENT_DIR` once that junction exists. If it is set to a different path, Pi loads that path instead of this clone.
 
 ```powershell
-git clone <this repo> "$HOME\.pi\agent"
-& "$HOME\.pi\agent\scripts\install.ps1"
+git clone https://github.com/vasilev17/pi-agent-harness.git pi-agent-harness
+powershell -ExecutionPolicy Bypass -File .\pi-agent-harness\scripts\install.ps1
+cursor-agent login
 ```
 
-To keep the repo somewhere else, set `PI_CODING_AGENT_DIR` to its path before running Pi.
+Cloning straight into `~/.pi/agent` also works. The script sees that and skips the junction.
 
 The script:
 
-1. Installs Pi 1.3.0 globally. The patches touch Pi internals, so upgrade Pi deliberately and re-run the smoke test.
-2. Runs `npm ci` for the provider's runtime dependencies. Pi's own packages are peers that Pi supplies at load time. A copy in `node_modules` would create duplicate classes, so they are left out.
-3. Builds `editor/pi-editor-open` into a `.vsix` and installs it into `cursor` and `code` if they are on `PATH`.
-4. Runs the smoke test. `"ok": true` with an empty `stderr` means every extension loaded.
+1. Junctions `~/.pi/agent` to this clone when the clone is somewhere else. If `~/.pi/agent` already exists and is a different directory, the script stops. It does not delete that directory.
+2. Installs Pi 1.3.0 globally. The patches touch Pi internals, so upgrade Pi deliberately and re-run the smoke test.
+3. Runs `npm ci` for the provider's runtime dependencies. Pi's own packages are peers that Pi supplies at load time. A copy in `node_modules` would create duplicate classes, so they are left out.
+4. Builds `editor/pi-editor-open` into a `.vsix` and installs it into `cursor` and `code` if they are on `PATH`.
+5. Installs the skills listed below into `~/.agents/skills`. Pi loads that directory itself.
+6. Runs the smoke test. `"ok": true` with an empty `stderr` means every extension loaded.
 
-Flags: `-SkipPi`, `-SkipEditor`, `-SkipEditorInstall`.
+Flags: `-SkipPi`, `-SkipEditor`, `-SkipEditorInstall`, `-SkipSkills`.
+
+`cursor-agent login` is a credential on that machine. It is not in the repo. The script cannot do it.
+
+After install, quit any Pi process that was already running and start `pi` again. A running process keeps the code it loaded at startup.
 
 ## Skills
 
-Skills are shared with other agents and live in `~/.agents/skills`, outside this repo. Reinstall them with the [skills](https://github.com/vercel-labs/skills) CLI:
+Pi loads skills from `~/.pi/agent/skills` and from `~/.agents/skills`. This repo has no `skills/` directory. The skills on the original machine are upstream packages shared with other agents, so they are installed by the script instead of copied here:
 
-```powershell
-npx skills add JuliusBrussee/caveman
-npx skills add vercel-labs/skills
-npx skills add latent-spaces/brag
-npx skills add heygen-com/hyperframes
-```
+| Source | Skills |
+| --- | --- |
+| `JuliusBrussee/caveman` | `cavecrew`, `caveman`, `caveman-commit`, `caveman-compress`, `caveman-help`, `caveman-review`, `caveman-stats` |
+| `vercel-labs/skills` | `find-skills` |
+| `latent-spaces/brag` | `brag` |
+| `heygen-com/hyperframes` | `hyperframes`, `hyperframes-animation`, `hyperframes-audio`, `hyperframes-cli`, `hyperframes-core`, `hyperframes-creative`, `hyperframes-keyframes`, `hyperframes-registry`, `hyperframes-studio`, `media-use` |
+
+## Not in this repo
+
+Pi writes these into the agent directory. `.gitignore` ignores everything that is not the setup, so a clone does not contain them:
+
+- `auth.json` and Cursor login tokens
+- `sessions/`
+- `cursor-acp-provider/models.json` and `sessions.json` (caches; `config.json` is the setup and is tracked)
+- `node_modules/`, `npm/`, and the `fd` / `rg` binaries Pi downloads into `bin/`
+- editor build output (`out/`, `*.vsix`)
+
+`awesome-pi-themes` is not vendored. Pi installs it from npm because `settings.json` lists it. The theme filter in that file is what drops `codex-slate`.

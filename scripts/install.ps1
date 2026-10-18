@@ -3,23 +3,25 @@
   Sets up this Pi configuration on a machine. Run from anywhere; safe to re-run.
 
 .DESCRIPTION
-  1. Installs the Pi CLI version the vendored packages were patched against.
-  2. Installs runtime dependencies of the vendored Cursor ACP provider.
-  3. Builds the pi-editor-open VS Code/Cursor extension and installs it into
+  1. Junctions ~/.pi/agent at this repo when the clone lives somewhere else.
+     Pi reads ~/.pi/agent unless PI_CODING_AGENT_DIR is set. A junction keeps
+     the default path working, so the clone can sit with other projects.
+  2. Installs the Pi CLI version the vendored packages were patched against.
+  3. Installs runtime dependencies of the vendored Cursor ACP provider.
+  4. Builds the pi-editor-open VS Code/Cursor extension and installs it into
      every editor CLI found on PATH (cursor, code).
-  4. Runs the smoke test.
-
-  The repo must be Pi's agent directory: clone it to ~/.pi/agent, or clone it
-  anywhere and set PI_CODING_AGENT_DIR to that path.
+  5. Installs the shared skills Pi loads from ~/.agents/skills.
+  6. Runs the smoke test.
 #>
 param(
 	[switch]$SkipPi,
 	[switch]$SkipEditor,
-	[switch]$SkipEditorInstall
+	[switch]$SkipEditorInstall,
+	[switch]$SkipSkills
 )
 
 $ErrorActionPreference = "Stop"
-$root = Split-Path -Parent $PSScriptRoot
+$root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot)).TrimEnd('\')
 $piVersion = "1.3.0"
 
 function Invoke-Step([string]$label, [scriptblock]$body) {
@@ -28,9 +30,56 @@ function Invoke-Step([string]$label, [scriptblock]$body) {
 	if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw "$label failed (exit $LASTEXITCODE)" }
 }
 
-$expected = [IO.Path]::GetFullPath($(if ($env:PI_CODING_AGENT_DIR) { $env:PI_CODING_AGENT_DIR } else { Join-Path $HOME ".pi\agent" })).TrimEnd('\')
-if ($expected -ne $root.TrimEnd('\')) {
-	Write-Warning "Pi reads $expected, but this repo is $root. Clone it there, or set PI_CODING_AGENT_DIR=$root."
+function Same-Path([string]$a, [string]$b) {
+	if (-not $a -or -not $b) { return $false }
+	return $a.TrimEnd('\').Equals($b.TrimEnd('\'), [StringComparison]::OrdinalIgnoreCase)
+}
+
+# PS 5.1 has no DirectoryInfo.Target. `dir /AL` prints: <JUNCTION> name [target]
+function Get-FinalPath([string]$path) {
+	$item = Get-Item -LiteralPath $path -Force
+	$full = [IO.Path]::GetFullPath($item.FullName).TrimEnd('\')
+	if (-not ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)) { return $full }
+	$parent = Split-Path -Parent $item.FullName
+	$name = Split-Path -Leaf $item.FullName
+	$listing = cmd /c "dir /AL `"$parent`""
+	$pattern = '<(JUNCTION|SYMLINKD)>\s+' + [regex]::Escape($name) + '\s+\[(.+)\]'
+	foreach ($line in @($listing)) {
+		if ($line -match $pattern) { return [IO.Path]::GetFullPath($Matches[2]).TrimEnd('\') }
+	}
+	throw "Could not read junction target of $full"
+}
+
+function Ensure-AgentLink([string]$repo) {
+	$agent = [IO.Path]::GetFullPath((Join-Path $HOME ".pi\agent")).TrimEnd('\')
+	if (Same-Path $agent $repo) {
+		Write-Host "Repo is already $agent"
+		return
+	}
+	if (Test-Path -LiteralPath $agent) {
+		$final = Get-FinalPath $agent
+		if (Same-Path $final $repo) {
+			Write-Host "$agent already points at this repo"
+			return
+		}
+		throw "$agent exists and is not this repo ($final). Move that directory aside, then re-run. This script will not delete it."
+	}
+	$parent = Split-Path -Parent $agent
+	if (-not (Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Path $parent | Out-Null }
+	if ($env:OS -eq "Windows_NT") {
+		Invoke-Step "Junction $agent -> $repo" { cmd /c "mklink /J `"$agent`" `"$repo`"" }
+	} else {
+		Invoke-Step "Symlink $agent -> $repo" { New-Item -ItemType SymbolicLink -Path $agent -Target $repo | Out-Null }
+	}
+}
+
+Ensure-AgentLink $root
+
+if ($env:PI_CODING_AGENT_DIR) {
+	$override = [IO.Path]::GetFullPath($env:PI_CODING_AGENT_DIR).TrimEnd('\')
+	if (-not (Same-Path $override $root)) {
+		Write-Warning "PI_CODING_AGENT_DIR=$override overrides ~/.pi/agent. Unset it, or point it at $root, or Pi will not load this clone."
+	}
 }
 
 $nodeVersion = [version]((node -v).TrimStart("v"))
@@ -66,6 +115,24 @@ if (-not $SkipEditor) {
 				Invoke-Step "Install pi-editor-open into $cli" { & $cli --install-extension $vsix --force }
 			}
 		}
+	}
+}
+
+# Pi auto-loads ~/.agents/skills. These are upstream skills, not copies in this repo.
+# Names match the set installed on the machine this setup was bundled from.
+if (-not $SkipSkills) {
+	$skillInstalls = @(
+		@{ Source = "JuliusBrussee/caveman"; Skills = @("cavecrew", "caveman", "caveman-commit", "caveman-compress", "caveman-help", "caveman-review", "caveman-stats") },
+		@{ Source = "vercel-labs/skills"; Skills = @("find-skills") },
+		@{ Source = "latent-spaces/brag"; Skills = @("brag") },
+		@{ Source = "heygen-com/hyperframes"; Skills = @("hyperframes", "hyperframes-animation", "hyperframes-audio", "hyperframes-cli", "hyperframes-core", "hyperframes-creative", "hyperframes-keyframes", "hyperframes-registry", "hyperframes-studio", "media-use") }
+	)
+	foreach ($entry in $skillInstalls) {
+		$source = $entry.Source
+		$skillArgs = @("--yes", "skills", "add", $source, "-g", "-y")
+		foreach ($name in $entry.Skills) { $skillArgs += @("--skill", $name) }
+		$step = { & npx @skillArgs }.GetNewClosure()
+		Invoke-Step "Skills from $source" $step
 	}
 }
 
