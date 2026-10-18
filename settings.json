@@ -1,0 +1,25 @@
+{
+  "lastChangelogVersion": "1.3.0",
+  "quietStartup": "header",
+  "theme": "dark",
+  "defaultProvider": "cursor-acp",
+  "defaultModel": "grok-4.7",
+  "defaultTools": [
+    "+codemode"
+  ],
+  "packages": [
+    "./packages/pi-cursor-acp-provider",
+    {
+      "source": "npm:awesome-pi-themes",
+      "themes": ["!themes/codex-slate.json"]
+    },
+    "./packages/pi-compact-tools"
+  ],
+  "modelThinkingLevels": {
+    "cursor-acp/grok-4.7": "high",
+    "cursor-acp/grok-4.6": "high",
+    "cursor-acp/claude-opus-5-5": "high",
+    "cursor-acp/claude-fable-5-1": "high"
+  },
+  "hideThinkingBlock": false
+}

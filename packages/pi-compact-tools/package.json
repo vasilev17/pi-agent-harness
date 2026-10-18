@@ -1,0 +1,69 @@
+{
+  "name": "pi-compact-tools",
+  "version": "0.16.2",
+  "description": "Tool rows for Pi in three styles: Claude, Codex, and Compact. Switch with /compact-tools; includes silent mode and a GitHub Dark theme.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Dong Hyeong Lee",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nedleeds/pi-compact-tools.git"
+  },
+  "homepage": "https://github.com/nedleeds/pi-compact-tools#readme",
+  "bugs": {
+    "url": "https://github.com/nedleeds/pi-compact-tools/issues"
+  },
+  "keywords": [
+    "pi-package",
+    "pi-coding-agent",
+    "pi-extension",
+    "claude-code",
+    "codex",
+    "terminal-ui",
+    "theme"
+  ],
+  "files": [
+    "extensions",
+    "themes",
+    "examples",
+    "schemas",
+    "release-notes.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "tsx --test tests/*.test.ts && tsx --test tests/resources.validation.ts",
+    "check": "tsc --noEmit && npm test && npm run check:resources",
+    "check:resources": "node scripts/check-resources.mjs",
+    "prepublishOnly": "npm run check"
+  },
+  "pi": {
+    "extensions": [
+      "./extensions/compact-tools.ts"
+    ],
+    "themes": [
+      "./themes/github-dark-pro.json"
+    ],
+    "image": "https://raw.githubusercontent.com/nedleeds/pi-compact-tools/main/assets/overview.gif"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": ">=0.85.1",
+    "@earendil-works/pi-tui": ">=0.85.1"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "1.2.0",
+    "@earendil-works/pi-tui": "1.2.0",
+    "@sinonjs/fake-timers": "15.0.0",
+    "@types/node": "^24.0.0",
+    "@types/sinonjs__fake-timers": "15.0.1",
+    "ajv": "8.20.0",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

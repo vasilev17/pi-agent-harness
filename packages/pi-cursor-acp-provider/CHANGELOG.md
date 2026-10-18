@@ -1,0 +1,42 @@
+# Changelog
+
+## 0.1.4
+
+- Reuse the CLI version returned by command discovery instead of running `--version` twice on startup.
+- Register the provider immediately from a version-matched last-known model catalog; defer ACP model discovery to Pi's model picker or `/cursor-acp models refresh`.
+- Retain cached models for up to 30 days. Without a usable catalog, only `cursor-acp/default` is listed until refresh; offline startup never launches a discovery process.
+- Add regression tests for startup cache misses, on-demand refresh, and stale catalog bounds.
+
+## 0.1.3
+
+- Cache Cursor CLI command discovery for the Pi process instead of probing `--version` during every auth check.
+- Share short-lived CLI login checks across startup model auth probes; invalidate after interactive login.
+- Add startup regression tests for command discovery, concurrent auth checks, cache expiry, and login invalidation.
+
+## 0.1.2
+
+- Fix unhandled ACP request rejections when model-catalog refresh is cancelled by selecting a model or closing the picker.
+- Cancel discovery initialization promptly and skip discovery when already cancelled.
+- Serialize shared session-store save, remove, and clear transactions across Pi processes, with stale-lock recovery.
+- Add cancellation and multi-process persistence regression tests.
+
+## 0.1.1
+
+- Default new installs to full-access/YOLO (`--force`). Cursor commands and edits may run without confirmation, subject to Cursor deny rules.
+- Preserve explicitly saved permission policies and explicit plan approvals.
+- Document the new security default and the prompting opt-out.
+
+## 0.1.0 — 2026-09-11
+
+Initial public release.
+
+- First-class `cursor-acp` Pi provider using Cursor's native ACP v1 server.
+- Dynamic, version-keyed Cursor model discovery with a 24-hour startup cache.
+- Per-model reasoning/effort mapping, images, text/thought streaming, and mode configuration.
+- Prompt, Auto-review, and Full-access permission policies with a safe prompting default.
+- Structured permission, question, and plan approval round trips.
+- Persistent Cursor sessions with load-replay suppression and Pi branch-divergence protection.
+- Authenticated loopback MCP bridge exposing namespaced Pi tools to Cursor.
+- Cursor CLI login, API-key, auth-token, diagnostics, cancellation, and process-tree cleanup.
+- Actionable handling for Cursor's Fable data-policy gate.
+- Security hardening for bounded protocol/cache/form inputs, MCP Host/Origin validation, fail-closed interaction outcomes, credential redaction, and deterministic shutdown.

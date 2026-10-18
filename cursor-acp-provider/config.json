@@ -1,0 +1,7 @@
+{
+  "permissions": "full-access",
+  "mode": "agent",
+  "piTools": true,
+  "fast": true,
+  "context": "256k"
+}

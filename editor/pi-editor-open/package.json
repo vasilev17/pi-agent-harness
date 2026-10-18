@@ -1,0 +1,30 @@
+{
+  "name": "pi-editor-open",
+  "displayName": "Pi Reference Support",
+  "description": "Opens a file and selects a line span when Pi asks, only in the window that has the session folder open.",
+  "version": "0.1.1",
+  "publisher": "pi-editor-open",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "piEditorOpen.status",
+        "title": "Pi Reference Support: Show Window"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "watch": "tsc -p . -w"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.9.0"
+  }
+}

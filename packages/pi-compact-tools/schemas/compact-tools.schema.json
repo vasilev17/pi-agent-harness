@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/nedleeds/pi-compact-tools/main/schemas/compact-tools.schema.json",
+  "title": "pi-compact-tools configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "style": {
+      "description": "How tool rows are drawn. compact draws each call as a compact, expandable row. claude draws them the way Claude Code does: runs of reads, searches, listings, and commands that only look around fold into one summary line, while other commands, edits, writes, and custom tools keep rows of their own with Bash(…), Update(…), and similar titles; click a group or press Ctrl+O to open it. codex draws them the way Codex CLI does: calls that only look around fold into a • Explored group, commands read Ran or Failed (exit N) with their last three output lines, edits preview their changed lines, and custom tools read • Called; Ctrl+O or a click opens each one. off leaves every tool with Pi's own renderer.",
+      "type": "string",
+      "enum": ["compact", "claude", "codex", "off"],
+      "default": "compact"
+    },
+    "mode": {
+      "description": "normal shows every tool row. silent leaves only your prompts and the final answers: tool rows, in-between assistant turns, thinking, error and abort notices, extension notices, and Pi's own status lines are hidden while a light animates beneath the prompt. Ctrl+' or /silent toggles it for the current session, in any style.",
+      "type": "string",
+      "enum": ["normal", "silent"],
+      "default": "normal"
+    },
+    "tools": {
+      "description": "Built-in tools that use compact rendering. Omitted tools keep Pi's default renderer.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["read", "write", "edit", "bash", "powershell", "grep", "find", "ls"]
+      },
+      "default": ["read", "write", "edit", "bash"]
+    },
+    "custom_tools": {
+      "description": "Compact rendering for tools registered by other extensions. true/false toggles it; the object form also sets whether rows start hidden and which tools keep their own renderer.",
+      "oneOf": [
+        { "type": "boolean" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "auto_compact": {
+              "description": "True starts custom tool rows hidden; false starts with a bounded preview.",
+              "type": "boolean",
+              "default": true
+            },
+            "exclude": {
+              "description": "Tool names that keep their own renderer.",
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "type": "string" },
+              "default": []
+            }
+          }
+        }
+      ],
+      "default": { "enabled": true, "auto_compact": true, "exclude": [] }
+    },
+    "previewLines": {
+      "description": "Maximum rendered lines shown initially when auto_compact is false. Explicit expansion always shows the complete result.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "default": 10
+    },
+    "auto_compact": {
+      "description": "Whether each compact-rendered tool starts hidden. False starts with a bounded preview; Pi's normal click and Ctrl+O flow can expand either state. Custom tools can be listed by name too, which overrides custom_tools.auto_compact for that tool.",
+      "type": "object",
+      "additionalProperties": { "type": "boolean" },
+      "properties": {
+        "read": { "type": "boolean", "default": true },
+        "write": { "type": "boolean", "default": true },
+        "edit": { "type": "boolean", "default": false },
+        "bash": { "type": "boolean", "default": true },
+        "powershell": { "type": "boolean", "default": true },
+        "grep": { "type": "boolean", "default": true },
+        "find": { "type": "boolean", "default": true },
+        "ls": { "type": "boolean", "default": true }
+      },
+      "default": {
+        "read": true,
+        "write": true,
+        "edit": false,
+        "bash": true
+      }
+    }
+  }
+}

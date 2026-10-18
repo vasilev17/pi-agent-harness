@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nedleeds/pi-compact-tools/main/schemas/compact-tools.schema.json",
+  "tools": ["read", "write", "edit", "bash", "grep", "find", "ls"],
+  "previewLines": 10,
+  "auto_compact": {
+    "read": true,
+    "write": true,
+    "edit": false,
+    "bash": true
+  }
+}

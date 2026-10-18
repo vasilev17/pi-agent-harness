@@ -1,0 +1,74 @@
+# Pi agent setup
+
+My [Pi](https://www.npmjs.com/package/@earendil-works/pi-coding-agent) configuration: settings, extensions, two patched packages, and a small editor extension. This repo is Pi's agent directory itself, so a clone is a working setup.
+
+Built and used on Windows 10 with Windows Terminal. Most of it is platform-neutral. The startup image, the Nerd Font glyphs, and the background painting assume a modern terminal.
+
+## Layout
+
+| Path | What |
+| --- | --- |
+| `settings.json` | Default provider/model (Cursor ACP, `grok-4.7`), thinking levels, package list. |
+| `keybindings.json` | Shift+Up/Down walk prompt history. |
+| `compact-tools.json` | Options for `pi-compact-tools`. |
+| `awesome-pi-themes-look-pack.json` | Turns off the look pack that ships with `awesome-pi-themes`. |
+| `cursor-acp-provider/config.json` | Cursor ACP defaults: full access, agent mode, fast, 256k context. |
+| `extensions/` | Local extensions. Each file starts with a comment saying what it does and why. |
+| `packages/pi-cursor-acp-provider/` | Patched fork of `pi-cursor-acp-provider`. |
+| `packages/pi-compact-tools/` | Patched fork of `pi-compact-tools`. |
+| `editor/pi-editor-open/` | VS Code/Cursor extension that opens a file at a line span when Pi asks. |
+| `scripts/install.ps1` | Sets up a new machine. |
+| `scripts/smoke-test.mjs` | Loads Pi in RPC mode and lists commands; no model call. |
+
+Everything else Pi writes here (sessions, `auth.json`, caches, downloaded `fd`/`rg`, npm installs) is ignored by `.gitignore`.
+
+## Vendored packages
+
+Both are MIT licensed; their `LICENSE` files are kept. They live in the repo instead of being installed from npm so that `pi update` cannot overwrite the patches.
+
+**`pi-cursor-acp-provider`** (from [zacbemis/pi-cursor-acp-provider](https://github.com/zacbemis/pi-cursor-acp-provider) 0.1.4)
+
+- Tools Cursor runs itself show up in the transcript as a display-only `Cursor` tool with diffs, instead of disappearing.
+- `/fast`, `/mode`, `/agent`, `/ask`, `/plan`, `/context` set Cursor options per session.
+- Esc ends the Cursor session; canceled turns are left out when the next prompt rebuilds context.
+- Config and caches follow `PI_CODING_AGENT_DIR`.
+
+**`pi-compact-tools`** (from [nedleeds/pi-compact-tools](https://github.com/nedleeds/pi-compact-tools) 0.16.2)
+
+- `/silent` levels: on, off, edits only, edits only with thinking. New sessions start at edits only.
+- Nerd Font glyphs on the idle editor border and the working label.
+- Colors and file-change counts for `Cursor` tool rows.
+- The activity line under the prompt is off.
+
+`awesome-pi-themes` is still installed from npm. `settings.json` filters out its `codex-slate` theme.
+
+## Install on a new machine
+
+Requirements: Node 22.19 or newer, git, a [Nerd Font](https://www.nerdfonts.com/) set in the terminal, and the [Cursor Agent CLI](https://cursor.com/docs/cli/installation) logged in (`cursor-agent login`). The footer's usage meter reads the Cursor login from `%APPDATA%\Cursor` or `~/.cursor`.
+
+```powershell
+git clone <this repo> "$HOME\.pi\agent"
+& "$HOME\.pi\agent\scripts\install.ps1"
+```
+
+To keep the repo somewhere else, set `PI_CODING_AGENT_DIR` to its path before running Pi.
+
+The script:
+
+1. Installs Pi 1.3.0 globally. The patches touch Pi internals, so upgrade Pi deliberately and re-run the smoke test.
+2. Runs `npm ci` for the provider's runtime dependencies. Pi's own packages are peers that Pi supplies at load time. A copy in `node_modules` would create duplicate classes, so they are left out.
+3. Builds `editor/pi-editor-open` into a `.vsix` and installs it into `cursor` and `code` if they are on `PATH`.
+4. Runs the smoke test. `"ok": true` with an empty `stderr` means every extension loaded.
+
+Flags: `-SkipPi`, `-SkipEditor`, `-SkipEditorInstall`.
+
+## Skills
+
+Skills are shared with other agents and live in `~/.agents/skills`, outside this repo. Reinstall them with the [skills](https://github.com/vercel-labs/skills) CLI:
+
+```powershell
+npx skills add JuliusBrussee/caveman
+npx skills add vercel-labs/skills
+npx skills add latent-spaces/brag
+npx skills add heygen-com/hyperframes
+```

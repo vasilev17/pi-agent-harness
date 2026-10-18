@@ -1,0 +1,22 @@
+# Pi writes runtime state, credentials, and caches into this same directory.
+# Ignore everything by default and opt in only what defines the setup.
+/*
+
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/settings.json
+!/keybindings.json
+!/compact-tools.json
+!/awesome-pi-themes-look-pack.json
+!/extensions/
+!/packages/
+!/editor/
+!/scripts/
+
+# Only the user-chosen provider settings. models.json and sessions.json are caches.
+!/cursor-acp-provider/
+/cursor-acp-provider/*
+!/cursor-acp-provider/config.json
+
+node_modules/
